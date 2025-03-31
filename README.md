@@ -10,8 +10,6 @@ A minimalist book manager built with **Node.js**, **GraphQL**, **MongoDB**, and 
 - Edit existing books inline
 - Delete books
 - Search by title or genre (case-insensitive)
-- Clean and dark-themed interface
-- Zero build tools required — runs in any browser
 - Backend powered by Apollo Server and MongoDB
 
 ---
