@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>📚 My Books</title>
+  <style>
+    body { background: #111; color: #fff; font-family: sans-serif; padding: 2rem; }
+    input, button { padding: 0.5rem; margin: 0.25rem; border-radius: 4px; }
+    input { width: 200px; }
+    ul { list-style: none; padding: 0; }
+    li { margin-bottom: 0.5rem; background: #222; padding: 1rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; }
+    .actions button { margin-left: 0.5rem; }
+  </style>
+</head>
+<body>
+  <h1>📚 My Books</h1>
+
+  <form id="book-form">
+    <input type="text" id="title" placeholder="Title" required />
+    <input type="text" id="author" placeholder="Author" required />
+    <input type="text" id="genre" placeholder="Genre" required />
+    <input type="hidden" id="book-id" />
+    <button type="submit">Save</button>
+  </form>
+
+  <ul id="book-list"></ul>
+
+  <script>
+    const endpoint = "http://localhost:4000/graphql";
+
+    const form = document.getElementById("book-form");
+    const title = document.getElementById("title");
+    const author = document.getElementById("author");
+    const genre = document.getElementById("genre");
+    const bookId = document.getElementById("book-id");
+    const list = document.getElementById("book-list");
+
+    const fetchBooks = async () => {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: "{ books { _id title author genre } }" }),
+      });
+      const { data } = await res.json();
+      list.innerHTML = "";
+      data.books.forEach((book) => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <div><strong>${book.title}</strong> by ${book.author} — <em>${book.genre}</em></div>
+          <div class="actions">
+            <button onclick='editBook(${JSON.stringify(book)})'>Edit</button>
+            <button onclick='deleteBook("${book._id}")'>Delete</button>
+          </div>`;
+        list.appendChild(li);
+      });
+    };
+
+    const editBook = (book) => {
+      title.value = book.title;
+      author.value = book.author;
+      genre.value = book.genre;
+      bookId.value = book._id;
+    };
+
+    const deleteBook = async (id) => {
+      await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: `mutation DeleteBook($id: ID!) {
+            deleteBook(id: $id)
+          }`,
+          variables: { id },
+        }),
+      });
+      fetchBooks();
+    };
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const mutation = bookId.value
+        ? `mutation UpdateBook($id: ID!, $title: String, $author: String, $genre: String) {
+            updateBook(id: $id, title: $title, author: $author, genre: $genre) {
+              _id
+            }
+          }`
+        : `mutation AddBook($title: String!, $author: String!, $genre: String!) {
+            addBook(title: $title, author: $author, genre: $genre) {
+              _id
+            }
+          }`;
+
+      const variables = bookId.value
+        ? { id: bookId.value, title: title.value, author: author.value, genre: genre.value }
+        : { title: title.value, author: author.value, genre: genre.value };
+
+      await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: mutation, variables }),
+      });
+
+      form.reset();
+      fetchBooks();
+    };
+
+    fetchBooks();
+  </script>
+</body>
+</html>
