@@ -33,6 +33,7 @@ A minimalist book manager built with **Node.js**, **GraphQL**, **MongoDB**, and 
 ```
 npm install
 ```
+
     Start MongoDB (must be running on mongodb://localhost:27017)
 
     Run the backend server:
